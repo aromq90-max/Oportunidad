@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Para Karina</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f7f2ed;
+            --card-bg: #ffffff;
+            --text-main: #2b2123;
+            --text-muted: #6e5c5e;
+            --accent: #b84a60;
+            --accent-dark: #913448;
+            --rose-soft: #fcf1f3;
+            --border-subtle: #ebd7db;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: radial-gradient(circle at center, #fff7f5 0%, var(--bg-color) 100%);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            padding: 16px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 410px;
+            height: 84vh;
+            max-height: 720px;
+            background-color: var(--card-bg);
+            border-radius: 32px;
+            box-shadow: 0 30px 60px rgba(184, 74, 96, 0.12), 0 10px 20px rgba(0,0,0,0.02);
+            border: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #petalCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 24px 24px 0 24px;
+            z-index: 3;
+        }
+
+        .progress-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: var(--border-subtle);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .progress-dot.active {
+            width: 24px;
+            border-radius: 4px;
+            background-color: var(--accent);
+        }
+
+        .slides-wrapper {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            z-index: 3;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 32px;
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(20px) scale(0.98);
+        }
+
+        .slide.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0) scale(1);
+        }
+
+        h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 600;
+            font-size: 30px;
+            color: var(--text-main);
+            margin-bottom: 16px;
+            line-height: 1.15;
+            letter-spacing: -0.5px;
+        }
+
+        p {
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--text-muted);
+            margin-bottom: 18px;
+            font-weight: 300;
+        }
+
+        .quote-box {
+            background-color: var(--rose-soft);
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px;
+            margin: 14px 0;
+            border-radius: 0 14px 14px 0;
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 18px;
+            color: var(--accent-dark);
+            text-align: left;
+            width: 100%;
+            box-shadow: 0 4px 12px rgba(184, 74, 96, 0.04);
+        }
+
+        .envelope-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .wax-seal {
+            width: 85px;
+            height: 85px;
+            background: linear-gradient(135deg, #d46a7e, #913448);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 36px;
+            box-shadow: 0 10px 30px rgba(145, 52, 72, 0.35), inset 0 2px 5px rgba(255,255,255,0.4);
+            margin: 0 auto 24px auto;
+            cursor: pointer;
+            position: relative;
+            animation: sealPulse 2.5s infinite;
+        }
+
+        .wax-seal::after {
+            content: '';
+            position: absolute;
+            inset: 6px;
+            border: 1px dashed rgba(255,255,255,0.4);
+            border-radius: 50%;
+        }
+
+        @keyframes sealPulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(184, 74, 96, 0.4); }
+            70% { transform: scale(1.04); box-shadow: 0 0 0 16px rgba(184, 74, 96, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(184, 74, 96, 0); }
+        }
+
+        .btn-romantic {
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            color: white;
+            border: none;
+            padding: 14px 36px;
+            border-radius: 50px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 20px rgba(184, 74, 96, 0.25);
+            margin-top: 10px;
+        }
+
+        .btn-romantic:active {
+            transform: scale(0.95);
+        }
+
+        .choice-area {
+            position: relative;
+            width: 100%;
+            height: 130px;
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn-choice {
+            padding: 13px 28px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: none;
+        }
+
+        #btn-yes {
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            color: white;
+            z-index: 5;
+            box-shadow: 0 8px 25px rgba(184, 74, 96, 0.3);
+        }
+
+        #btn-no {
+            background-color: #f0e1e4;
+            color: var(--text-muted);
+            z-index: 4;
+        }
+
+        .celebration-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 36px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease;
+            z-index: 10;
+        }
+
+        .celebration-screen.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .footer-hint {
+            font-size: 11px;
+            color: #bfa5a9;
+            text-align: center;
+            padding: 14px;
+            letter-spacing: 0.5px;
+            z-index: 3;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="mainContainer">
+    <canvas id="petalCanvas"></canvas>
+
+    <div class="progress-header" id="progressHeader">
+        <div class="progress-dot active"></div>
+        <div class="progress-dot"></div>
+        <div class="progress-dot"></div>
+        <div class="progress-dot"></div>
+        <div class="progress-dot"></div>
+    </div>
+
+    <div class="slides-wrapper" id="slidesWrapper">
+
+        <!-- Cover -->
+        <div class="slide active">
+            <div class="envelope-card">
+                <div class="wax-seal" onclick="nextSlide()">K</div>
+                <h2 style="font-size: 34px; margin-bottom: 6px;">Para ti, Karina</h2>
+                <p>Un espacio de absoluta sinceridad, sin máscaras ni presiones.</p>
+                <button class="btn-romantic" onclick="nextSlide()">Abrir carta</button>
+            </div>
+        </div>
+
+        <!-- Slide 1 -->
+        <div class="slide">
+            <h2>Lo que fuimos</h2>
+            <p>A veces me pongo a pensar en todo lo que hemos recorrido... Sé que cometí errores, que no supe cuidar las cosas como debí, y que el inicio de todo esto estuvo lejos de ser perfecto.</p>
+            <button class="btn-romantic" onclick="nextSlide()">Continuar</button>
+        </div>
+
+        <!-- Slide 2 -->
+        <div class="slide">
+            <h2>Nuestra historia</h2>
+            <p>Pero en medio de los tropiezos y las sombras, hay una verdad inquebrantable que habita en mi memoria y en mi piel:</p>
+            <div class="quote-box">"No creas que un mal comienzo tiene un mal final... lo nuestro merece trascender."</div>
+            <button class="btn-romantic" onclick="nextSlide()">Continuar</button>
+        </div>
+
+        <!-- Slide 3 -->
+        <div class="slide">
+            <h2>El presente</h2>
+            <p>Sé que te has alejado, que tienes miedo y que hoy levantas murallas para protegerte. Y te entiendo, de verdad te entiendo. No vengo a exigirte explicaciones ni a reclamarte silencios.</p>
+            <button class="btn-romantic" onclick="nextSlide()">Continuar</button>
+        </div>
+
+        <!-- Slide 4 -->
+        <div class="slide">
+            <h2>El destino</h2>
+            <p>Solo quería mirarte hoy a los ojos y recordarte quién soy cuando estoy contigo. Porque a pesar de todo, te amo, y sé que el tiempo siempre acomoda las piezas:</p>
+            <div class="quote-box">"Todo lo que está destinado al amor siempre encuentra el camino."</div>
+            <button class="btn-romantic" onclick="nextSlide()">Ver pregunta</button>
+        </div>
+
+        <!-- Slide 5 -->
+        <div class="slide">
+            <h2>Una oportunidad</h2>
+            <p>No te pido que resolvamos la vida hoy. Solo te pregunto esto desde el alma... ¿Me darías una oportunidad para empezar de nuevo, paso a paso?</p>
+            
+            <div class="choice-area">
+                <button class="btn-choice" id="btn-yes" onclick="showCelebration('yes')">Sí, vamos paso a paso</button>
+                <button class="btn-choice" id="btn-no" onmouseover="handleNoAttempt()" ontouchstart="handleNoAttempt()" onclick="handleNoAttempt()">No</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Celebration Screen -->
+    <div class="celebration-screen" id="celebrationScreen">
+        <h2 id="celebsTitle" style="color: var(--accent-dark); font-size: 34px; margin-bottom: 12px;">Gracias, Karina</h2>
+        <p id="celebsText" style="font-size: 16px; margin-bottom: 20px; color: var(--text-main);">Te demostraré que las cosas serán diferentes, que el pasado se queda atrás y que construir contigo es lo único que quiero. Tranquila, sin presiones... pero me gustaría mucho esa oportunidad.</p>
+        <div class="quote-box" style="text-align: center; margin-top: 10px;">"Todo lo que está destinado al amor siempre encuentra el camino."</div>
+    </div>
+
+    <div class="footer-hint" id="footerHint">Toca para avanzar en la carta</div>
+</div>
+
+<script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const dots = document.querySelectorAll('.progress-dot');
+    const totalSlides = slides.length;
+
+    function updateDots() {
+        dots.forEach((dot, index) => {
+            if (index === currentSlide) {
+                dot.classList.add('active');
+            } else {
+                dot.classList.remove('active');
+            }
+        });
+    }
+
+    function nextSlide() {
+        if (currentSlide < totalSlides - 1) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide++;
+            slides[currentSlide].classList.add('active');
+            updateDots();
+        }
+    }
+
+    let attemptCount = 0;
+    const noMessages = ["¿Segura?", "Piénsalo bien...", "Sí, di que sí", "Ya no se puede decir no"];
+
+    function handleNoAttempt() {
+        const btnYes = document.getElementById('btn-yes');
+        const btnNo = document.getElementById('btn-no');
+        
+        attemptCount++;
+        let scaleFactor = 1 + (attemptCount * 0.2);
+        btnYes.style.transform = `scale(${scaleFactor})`;
+        
+        if (attemptCount < noMessages.length) {
+            btnNo.innerText = noMessages[attemptCount - 1];
+        } else {
+            // El No queda bloqueado/inhabilitado y activa el mensaje final de juego
+            btnNo.innerText = "Inhabilitado";
+            btnNo.style.opacity = "0.2";
+            btnNo.style.pointerEvents = "none";
+            
+            // Forzar la celebración con el mensaje de juego
+            setTimeout(() => {
+                showCelebration('no');
+            }, 400);
+        }
+    }
+
+    function showCelebration(type) {
+        const title = document.getElementById('celebsTitle');
+        const text = document.getElementById('celebsText');
+
+        if (type === 'no') {
+            title.innerText = "Un pequeño juego...";
+            text.innerText = "Disculpa, era un juego... pero sí me gustaría una oportunidad.";
+        } else {
+            title.innerText = "Gracias, Karina";
+            text.innerText = "Te demostraré que las cosas serán diferentes, que el pasado se queda atrás y que construir contigo es lo único que quiero. Tranquila, sin presiones... pero me gustaría mucho esa oportunidad.";
+        }
+
+        document.getElementById('celebrationScreen').classList.add('show');
+        document.getElementById('progressHeader').style.display = 'none';
+        document.getElementById('footerHint').style.display = 'none';
+        startPetals();
+    }
+
+    const canvas = document.getElementById('petalCanvas');
+    const ctx = canvas.getContext('2d');
+    let petals = [];
+
+    function resizeCanvas() {
+        canvas.width = canvas.parentElement.offsetWidth;
+        canvas.height = canvas.parentElement.offsetHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class Petal {
+        constructor() { this.reset(); }
+        reset() {
+            this.x = Math.random() * canvas.width;
+            this.y = -20;
+            this.size = Math.random() * 8 + 6;
+            this.speedY = Math.random() * 1 + 0.5;
+            this.speedX = Math.random() * 1 - 0.5;
+            this.rotation = Math.random() * 360;
+            this.rotationSpeed = Math.random() * 2 - 1;
+            this.opacity = Math.random() * 0.6 + 0.3;
+        }
+        update() {
+            this.y += this.speedY;
+            this.x += this.speedX + Math.sin(this.y / 30) * 0.5;
+            this.rotation += this.rotationSpeed;
+            if (this.y > canvas.height + 20) this.reset();
+        }
+        draw() {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate((this.rotation * Math.PI) / 180);
+            ctx.globalAlpha = this.opacity;
+            ctx.fillStyle = '#e295a5';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, this.size, this.size / 2, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    for (let i = 0; i < 15; i++) petals.push(new Petal());
+
+    function animatePetals() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        petals.forEach(p => { p.update(); p.draw(); });
+        requestAnimationFrame(animatePetals);
+    }
+    animatePetals();
+</script>
+
+</body>
+</html>
