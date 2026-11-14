@@ -62,11 +62,47 @@
             z-index: 1;
         }
 
+        .music-controls {
+            position: absolute;
+            top: 18px;
+            right: 20px;
+            display: flex;
+            gap: 8px;
+            z-index: 20;
+        }
+
+        .music-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--rose-soft);
+            border: 1px solid var(--border-subtle);
+            color: var(--accent);
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .music-btn.playing {
+            background: var(--accent);
+            color: white;
+            animation: pulseMusic 2s infinite;
+        }
+
+        @keyframes pulseMusic {
+            0% { box-shadow: 0 0 0 0 rgba(184, 74, 96, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(184, 74, 96, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(184, 74, 96, 0); }
+        }
+
         .progress-header {
             display: flex;
             justify-content: center;
             gap: 8px;
-            padding: 24px 24px 0 24px;
+            padding: 26px 24px 0 24px;
             z-index: 3;
         }
 
@@ -281,6 +317,13 @@
 <div class="container" id="mainContainer">
     <canvas id="petalCanvas"></canvas>
 
+    <!-- Audio directo desde tu repositorio de GitHub -->
+    <audio id="bgAudio" src="https://raw.githubusercontent.com/aromq90-max/Oportunidad/main/greecy.mp3" preload="auto" loop></audio>
+
+    <div class="music-controls">
+        <button class="music-btn" id="toggleMusicBtn" title="Silenciar/Activar música" onclick="toggleAudio()">♫</button>
+    </div>
+
     <div class="progress-header" id="progressHeader">
         <div class="progress-dot active"></div>
         <div class="progress-dot"></div>
@@ -294,10 +337,10 @@
         <!-- Cover -->
         <div class="slide active">
             <div class="envelope-card">
-                <div class="wax-seal" onclick="nextSlide()">K</div>
+                <div class="wax-seal" onclick="openLetter()">K</div>
                 <h2 style="font-size: 34px; margin-bottom: 6px;">Para ti, Karina</h2>
                 <p>Un espacio de absoluta sinceridad, sin máscaras ni presiones.</p>
-                <button class="btn-romantic" onclick="nextSlide()">Abrir carta</button>
+                <button class="btn-romantic" onclick="openLetter()">Abrir carta</button>
             </div>
         </div>
 
@@ -355,10 +398,107 @@
 </div>
 
 <script>
+    // --- REPRODUCTOR DIRECTO DE GITHUB + PIANO DE RESPALDO ---
+    const bgAudio = document.getElementById('bgAudio');
+    const toggleBtn = document.getElementById('toggleMusicBtn');
+    let audioCtx = null;
+    let isPlaying = false;
+    let fallbackMode = false;
+    let pianoInterval = null;
+
+    bgAudio.volume = 0.7;
+
+    function startMusic() {
+        if (isPlaying) return;
+        bgAudio.play().then(() => {
+            isPlaying = true;
+            fallbackMode = false;
+            toggleBtn.classList.add('playing');
+        }).catch(() => {
+            // Si falla la carga por red o bloqueo, activa el piano suave automático
+            startFallbackPiano();
+        });
+    }
+
+    function startFallbackPiano() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        isPlaying = true;
+        fallbackMode = true;
+        toggleBtn.classList.add('playing');
+
+        const chords = [
+            [261.63, 329.63, 392.00, 493.88],
+            [220.00, 261.63, 329.63, 392.00],
+            [174.61, 220.00, 261.63, 329.63],
+            [196.00, 246.94, 293.66, 392.00]
+        ];
+        let step = 0;
+
+        function playNote(freq, delay, duration) {
+            if (!isPlaying) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+
+            gain.gain.setValueAtTime(0.001, audioCtx.currentTime + delay);
+            gain.gain.exponentialRampToValueAtTime(0.06, audioCtx.currentTime + delay + 0.3);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + delay + duration);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(audioCtx.currentTime + delay);
+            osc.stop(audioCtx.currentTime + delay + duration);
+        }
+
+        function playArpeggio() {
+            if (!isPlaying) return;
+            const chord = chords[step % chords.length];
+            chord.forEach((freq, idx) => playNote(freq, idx * 0.55, 2.8));
+            step++;
+        }
+
+        playArpeggio();
+        pianoInterval = setInterval(playArpeggio, 2600);
+    }
+
+    function toggleAudio() {
+        if (!fallbackMode) {
+            if (bgAudio.paused) {
+                bgAudio.play();
+                isPlaying = true;
+                toggleBtn.classList.add('playing');
+            } else {
+                bgAudio.pause();
+                isPlaying = false;
+                toggleBtn.classList.remove('playing');
+            }
+        } else {
+            if (isPlaying) {
+                isPlaying = false;
+                clearInterval(pianoInterval);
+                toggleBtn.classList.remove('playing');
+            } else {
+                startFallbackPiano();
+            }
+        }
+    }
+
+    // --- NAVEGACIÓN DE SLIDES ---
     let currentSlide = 0;
     const slides = document.querySelectorAll('.slide');
     const dots = document.querySelectorAll('.progress-dot');
     const totalSlides = slides.length;
+
+    function openLetter() {
+        startMusic();
+        nextSlide();
+    }
 
     function updateDots() {
         dots.forEach((dot, index) => {
@@ -379,6 +519,7 @@
         }
     }
 
+    // --- LÓGICA DE BOTONES SÍ / NO ---
     let attemptCount = 0;
     const noMessages = ["¿Segura?", "Piénsalo bien...", "Sí, di que sí", "Ya no se puede decir no"];
 
@@ -393,12 +534,10 @@
         if (attemptCount < noMessages.length) {
             btnNo.innerText = noMessages[attemptCount - 1];
         } else {
-            // El No queda bloqueado/inhabilitado y activa el mensaje final de juego
             btnNo.innerText = "Inhabilitado";
             btnNo.style.opacity = "0.2";
             btnNo.style.pointerEvents = "none";
             
-            // Forzar la celebración con el mensaje de juego
             setTimeout(() => {
                 showCelebration('no');
             }, 400);
@@ -420,9 +559,9 @@
         document.getElementById('celebrationScreen').classList.add('show');
         document.getElementById('progressHeader').style.display = 'none';
         document.getElementById('footerHint').style.display = 'none';
-        startPetals();
     }
 
+    // --- PÉTALOS FLOTANTES ---
     const canvas = document.getElementById('petalCanvas');
     const ctx = canvas.getContext('2d');
     let petals = [];
